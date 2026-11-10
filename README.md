@@ -37,62 +37,65 @@ Defines system access roles:
 
 ### 2. `User` Model
 Represents registered users in the library system:
-- `id` (`String`, CUID, Primary Key)
-- `name` (`String`)
+- `id` (`Int`, Primary Key, Autoincrement)
 - `email` (`String`, Unique)
+- `password` (`String`)
 - `role` (`Role` enum, defaults to `PATRON`)
 - `reviews` (`Review[]`, 1-to-many relation)
-- `createdAt` / `updatedAt` (`DateTime` timestamps)
 
 ### 3. `Genre` Model
 Represents distinct literary categories:
-- `id` (`String`, CUID, Primary Key)
+- `id` (`Int`, Primary Key, Autoincrement)
 - `name` (`String`, Unique)
+- `slug` (`String`, Unique)
 - `books` (`Book[]`, 1-to-many relation)
 
 ### 4. `Book` Model
 Represents books within the library catalog:
-- `id` (`String`, CUID, Primary Key)
+- `id` (`Int`, Primary Key, Autoincrement)
 - `title` (`String`)
 - `author` (`String`)
 - `isbn` (`String`, Unique)
-- `publishedYear` (`Int?`, Optional)
-- `genreId` (`String`, Foreign Key referencing `Genre.id`)
-- `genre` (`Genre` relation, with `onDelete: Restrict`)
+- `description` (`String`)
+- `coverImage` (`String?`, Optional)
+- `totalCopies` (`Int`, defaults to `1`)
+- `availableCopies` (`Int`, defaults to `1`)
+- `genreId` (`Int`, Foreign Key referencing `Genre.id`)
+- `genre` (`Genre` relation)
 - `reviews` (`Review[]`, 1-to-many relation)
-- `createdAt` / `updatedAt` (`DateTime` timestamps)
+- `createdAt` (`DateTime`, defaults to `now()`)
 
 ### 5. `Review` Model (Stretch Relation)
 Represents book reviews written by users:
-- `id` (`String`, CUID, Primary Key)
-- `rating` (`Int`, e.g. 1-5 rating scale)
+- `id` (`Int`, Primary Key, Autoincrement)
+- `rating` (`Int`, 1-5 rating scale)
 - `comment` (`String?`, Optional written critique)
-- `bookId` (`String`, Foreign Key referencing `Book.id`, `onDelete: Cascade`)
-- `userId` (`String`, Foreign Key referencing `User.id`, `onDelete: Cascade`)
+- `bookId` (`Int`, Foreign Key referencing `Book.id`, `onDelete: Cascade`)
+- `userId` (`Int`, Foreign Key referencing `User.id`, `onDelete: Cascade`)
 - `book` / `user` relations
-- `createdAt` / `updatedAt` (`DateTime` timestamps)
+- `createdAt` (`DateTime`, defaults to `now()`)
 - `@@unique([bookId, userId])` ensures one review per user per book.
 
 ---
 
 ## Schema Decisions
 
-### Why `Book` References `Genre` Rather Than Embedding It
+Book references Genre via a genreId foreign key rather than embedding the genre name directly, because many books share one genre and genres are managed independently (renaming a genre should not require updating every book). User stores a `role` field using a Role enum so Postgres and TypeScript both reject any value other than PATRON or LIBRARIAN.
 
-In relational database design for a library catalog, `Genre` is modeled as an independent, normalized entity referenced via a `genreId` foreign key rather than being embedded as a plain string or unstructured attribute on the `Book` record for several critical reasons:
+### Architectural Rationale
 
 1. **Data Normalization & Single Source of Truth**:
    Treating genres as standalone records eliminates redundant string duplication across thousands of books. A single canonical row exists for each genre (e.g., "Science Fiction"), avoiding discrepancies like "Sci-Fi", "Science-Fiction", or "sci fi".
 
 2. **Integrity and Anomaly Prevention**:
    - **Update Anomalies**: If a genre needs renaming or recategorization, updating a single record in the `Genre` table automatically reflects across all associated books without requiring bulk table updates or locking large portions of the catalog.
-   - **Deletion Anomalies**: With `@relation(..., onDelete: Restrict)`, the database prevents accidental deletion of a genre that currently has active books associated with it.
+   - **Deletion Anomalies**: With foreign key constraints, the database prevents accidental deletion or orphaning of active catalog records.
 
 3. **Query Optimization & Indexing**:
    Filtering and aggregating books by foreign key (`genreId`) leverages B-tree indexes on foreign keys, providing $O(\log N)$ lookups and fast joins. It also makes listing all available genres in the library simple and instant (`prisma.genre.findMany()`) without requiring costly `SELECT DISTINCT` scans over millions of book rows.
 
 4. **Extensibility & Schema Evolution**:
-   Modeling `Genre` as a first-class relation allows the schema to easily grow. Additional metadata can be added to `Genre` in future iterations (such as description, Dewey Decimal classification, shelf/aisle location, or hierarchical parent/child sub-genres) without altering the `Book` table structure.
+   Modeling `Genre` as a first-class relation allows the schema to easily grow. Additional metadata can be added to `Genre` in future iterations (such as descriptions, category hierarchies, shelf/aisle location, or Dewey Decimal classifications) without altering the `Book` table structure.
 
 ---
 
@@ -101,7 +104,7 @@ In relational database design for a library catalog, `Genre` is modeled as an in
 Modeling relational data in Prisma with PostgreSQL differs noticeably from document databases (such as MongoDB):
 
 - **Strict Schema Enforcement vs. Dynamic Flexibility**:
-  In a document database, books might store genres and reviews as nested embedded documents or string arrays directly inside the book document. This offers fast, single-document read performance without joins, but risks data drift, orphaned records, and schema divergence across documents. In Prisma, relations, foreign keys, unique constraints, and referential actions (`Restrict`, `Cascade`) are strictly declared and enforced at the database layer.
+  In a document database, books might store genres and reviews as nested embedded documents or string arrays directly inside the book document. This offers fast, single-document read performance without joins, but risks data drift, orphaned records, and schema divergence across documents. In Prisma, relations, foreign keys, unique constraints, and referential actions are strictly declared and enforced at the database layer.
 - **Explicit Relations & Controlled Joins**:
   In document stores, denormalization is preferred to avoid costly application-level `$lookup` aggregations. In Prisma, data is normalized by default, and developers explicitly control relational queries via the `include` or `select` syntax (e.g., `include: { genre: true, reviews: true }`). This gives compile-time TypeScript safety for query payloads while allowing the database engine to execute optimized relational joins.
 - **Declarative Migrations**:
@@ -140,7 +143,7 @@ cd api
 npm run db:migrate -- --name init
 ```
 
-Run the seed script to populate at least 4 genres and 15+ books (inserts 5 genres, 20 books, 2 users, and sample review):
+Run the seed script to populate at least 4 genres and 15+ books (inserts 4 genres, 20 books, and users):
 
 ```bash
 npm run db:seed
@@ -187,12 +190,11 @@ npm run test:e2e
 
 ```text
 library-management-system/
-├── api/ (and library-api/)
-│   ├── .env.example              # Environment variables template
+├── api/
+│   ├── .env.example              # Environment variables template with DATABASE_URL
 │   ├── prisma/
 │   │   ├── schema.prisma         # Prisma schema with Book, Genre, User, Role, Review
-│   │   └── seed.ts               # Seed script (5 genres, 20 books, users, review)
-│   ├── prisma.config.ts          # Prisma 7 configuration file
+│   │   └── seed.ts               # Seed script (4 genres, 20 books, users)
 │   ├── src/
 │   │   ├── main.ts               # Application entry point
 │   │   ├── app.module.ts         # Root NestJS module

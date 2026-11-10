@@ -12,9 +12,13 @@ export class BooksService {
     });
   }
 
-  findOne(id: string) {
+  findOne(id: number | string) {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(numId)) {
+      return null;
+    }
     return this.prisma.book.findUnique({
-      where: { id },
+      where: { id: numId },
       include: { genre: true },
     });
   }
