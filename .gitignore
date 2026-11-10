@@ -6,4 +6,3 @@ coverage
 !.env.example
 *.tsbuildinfo
 .DS_Store
-library-api
