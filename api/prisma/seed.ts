@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
     create: {
       email: 'patron@library.local',
       password: 'placeholder-hashed-password',
-      role: Role.PATRON,
+      role: 'PATRON',
     },
   });
 
@@ -78,7 +78,7 @@ async function main(): Promise<void> {
     create: {
       email: 'librarian@library.local',
       password: 'placeholder-hashed-password',
-      role: Role.LIBRARIAN,
+      role: 'LIBRARIAN',
     },
   });
 
