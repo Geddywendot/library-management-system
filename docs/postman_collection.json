@@ -1,0 +1,113 @@
+{
+  "info": {
+    "name": "Library Management System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"librarian2@library.local\",\n  \"password\": \"secret123\",\n  \"role\": \"LIBRARIAN\"\n}" },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"librarian2@library.local\",\n  \"password\": \"secret123\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Genres",
+      "item": [
+        { "name": "List Genres", "request": { "method": "GET", "url": "{{baseUrl}}/genres" } },
+        { "name": "Get Genre", "request": { "method": "GET", "url": "{{baseUrl}}/genres/1" } },
+        {
+          "name": "Create Genre",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"History\"\n}" },
+            "url": "{{baseUrl}}/genres"
+          }
+        },
+        {
+          "name": "Update Genre",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"World History\"\n}" },
+            "url": "{{baseUrl}}/genres/1"
+          }
+        },
+        {
+          "name": "Delete Genre",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/genres/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        { "name": "List Books", "request": { "method": "GET", "url": "{{baseUrl}}/books?genreId=1&search=dune&page=1&limit=20" } },
+        { "name": "Get Book", "request": { "method": "GET", "url": "{{baseUrl}}/books/1" } },
+        {
+          "name": "Create Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Project Hail Mary\",\n  \"author\": \"Andy Weir\",\n  \"isbn\": \"9780593135204\",\n  \"description\": \"A lone astronaut must save Earth.\",\n  \"totalCopies\": 4,\n  \"genreId\": 2\n}" },
+            "url": "{{baseUrl}}/books"
+          }
+        },
+        {
+          "name": "Update Book",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"totalCopies\": 5\n}" },
+            "url": "{{baseUrl}}/books/1"
+          }
+        },
+        {
+          "name": "Delete Book",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/books/1"
+          }
+        }
+      ]
+    }
+  ]
+}
