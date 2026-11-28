@@ -11,6 +11,16 @@ PostgreSQL + Prisma data layer for the library book catalog.
 
 ## Setup
 
+Start the frontend development server from the repository root:
+
+```bash
+npm run dev
+```
+
+Install the frontend dependencies first with `npm --prefix client install` if needed.
+
+Set up the API and database:
+
 ```bash
 cd api
 cp .env.example .env   # set DATABASE_URL to your PostgreSQL connection string
@@ -18,6 +28,26 @@ npm install
 npx prisma migrate dev --name init
 npx prisma db seed
 ```
+
+## Client Setup & Run
+
+```bash
+cd client
+npm install   # install React dependencies
+npm run dev    # start Vite development server (defaults to http://localhost:5173)
+```
+
+The client expects the backend API URL in the `VITE_API_URL` environment variable. Create a `.env` file in the `client` directory (or set the variable in your shell) e.g.:
+```dotenv
+VITE_API_URL=http://localhost:3000/api
+```
+
+The new features include:
+- **Reading List** managed via `ReadingListContext` (add/remove/clear, persisted in `localStorage`).
+- **Login / Register** pages that store the JWT token.
+- **ProtectedRoute** that guards the booking page.
+- **SpaceBookingPage** UI for reserving study spaces.
+
 
 ## Schema Decisions
 
