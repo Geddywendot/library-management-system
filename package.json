@@ -1,0 +1,7 @@
+{
+  "name": "library-management-system",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix client run dev"
+  }
+}
